@@ -25,8 +25,7 @@ def get_function_signature(function_name):
     return function_signature
 
 
-def get_function_called(hash):
-    tx = web3.eth.get_transaction(hash)
+def get_function_called(tx):
     # get the first 8 bytes of the input hex to check which function is called
     # https://stackoverflow.com/questions/55258332/find-the-function-name-and-parameter-from-input-data
     tx_function_sig_hash = tx.input[0:8]
@@ -43,11 +42,10 @@ def get_function_called(hash):
                 return function_called, called_function_signature
 
 
-def decode_tx_details(hash):
+def get_function_call_details(tx):
     # Create Uniswapswap contract object
     uniswap_router_contract = web3.eth.contract(address=UNISWAP_ROUTER_ADDRESS, abi=UNISWAP_ROUTER_ABI)
     # Use Infura endpoint to fetch tx data
-    tx = web3.eth.get_transaction(hash)
     # use the contract's ABI (https://docs.soliditylang.org/en/v0.8.4/abi-spec.html) to decode
     # the parameters of the function call in the tx
     decoded_tx_input = uniswap_router_contract.decode_function_input(tx.input)
@@ -57,11 +55,13 @@ def decode_tx_details(hash):
 def main():
     txs = [ADD_LIQUIDITY_TX, REMOVE_LIQUIDITY_TX, SWAP_TX]
     for tx in txs:
-        (function_called, called_function_signature) = get_function_called(tx)
-        tx_details = decode_tx_details(tx)
+        tx_details = web3.eth.get_transaction(tx)
+        (function_called, called_function_signature) = get_function_called(tx_details)
+        function_call_details = get_function_call_details(tx_details)
         print(f"function called: {function_called}")
         print(f"function signature: {called_function_signature}")
-        print(f"tx details:\n {tx_details}")
+        print(f"function call details:\n {function_call_details}")
+        print(f"tx details: {tx_details}")
         print("\n")
 
 
